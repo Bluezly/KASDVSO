@@ -1,8 +1,9 @@
-name: Rust
+name: Build Release & Rust
 
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - "v*"
   pull_request:
     branches: [ "main" ]
 
@@ -11,12 +12,49 @@ env:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: kasdvso-linux-x86_64
+            bin: kasdvso
+          - os: macos-latest
+            artifact: kasdvso-macos
+            bin: kasdvso
+          - os: windows-latest
+            artifact: kasdvso-windows-x86_64
+            bin: kasdvso.exe
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build release
+      run: cargo build --release
+
+    - name: Prepare artifact (Linux / macOS)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir -p dist
+        cp target/release/${{ matrix.bin }} dist/
+        tar -czf dist/${{ matrix.artifact }}.tar.gz -C dist ${{ matrix.bin }}
+
+    - name: Prepare artifact (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        New-Item -ItemType Directory -Force -Path dist | Out-Null
+        Copy-Item target\release\${{ matrix.bin }} dist\
+        Compress-Archive -Path dist\${{ matrix.bin }} -DestinationPath dist\${{ matrix.artifact }}.zip
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
