@@ -1,0 +1,10 @@
+print "Hello from KAS"
+
+let x = 2
+let y = 3
+
+fn add(a, b) {
+    return a + b
+}
+
+print add(x, y)

@@ -1,0 +1,14 @@
+import ws
+import "./echo_client.kas"
+
+print "ws module loaded"
+
+let h = echo_client.connect()
+print h
+
+echo_client.send_hello(h)
+sleep(2000)
+
+print echo_client.recv_msg(h)
+
+echo_client.close(h)

@@ -1,0 +1,15 @@
+fn connect() {
+    return ws.connect("ws://demos.kaazing.com/echo")
+}
+
+fn send_hello(h) {
+    ws.send(h, "hello")
+}
+
+fn recv_msg(h) {
+    return ws.recv(h)
+}
+
+fn close(h) {
+    ws.close(h)
+}
